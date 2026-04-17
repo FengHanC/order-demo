@@ -1,77 +1,54 @@
-![](https://www.thinkphp.cn/uploads/images/20230630/300c856765af4d8ae758c503185f8739.png)
+# order-demo
 
-ThinkPHP 8
-===============
+基于 ThinkPHP 8 实现的订单创建接口 Demo，重点演示接口幂等性处理方案。
 
-## 特性
+## 功能
 
-* 基于PHP`8.0+`重构
-* 升级`PSR`依赖
-* 依赖`think-orm`3.0+版本
-* 全新的`think-dumper`服务，支持远程调试
-* 支持`6.0`/`6.1`无缝升级
+- 订单创建接口（`POST /order/create`）
+- 通过 `request_id` 实现幂等控制，防止重复下单
+- 唯一索引兜底并发场景，保证数据一致性
+- 库存扣减与并发冲突回滚
 
-> ThinkPHP8的运行环境要求PHP8.0+
+## 接口说明
 
-现在开始，你可以使用官方提供的[ThinkChat](https://chat.topthink.com/)，让你在学习ThinkPHP的旅途中享受私人AI助理服务！
+### POST /order/create
 
-![](https://www.topthink.com/uploads/assistant/20230630/4d1a3f0ad2958b49bb8189b7ef824cb0.png)
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| user_id | int | 用户ID |
+| product_id | int | 商品ID |
+| request_id | string | 幂等键，必传，全局唯一 |
 
-ThinkPHP生态服务由[顶想云](https://www.topthink.com)（TOPThink Cloud）提供，为生态提供专业的开发者服务和价值之选。
+**响应示例**
+```json
+{
+  "code": 0,
+  "msg": "下单成功",
+  "data": {
+    "order_id": 1,
+    "order_no": "20240418120000123456"
+  }
+}
+```
 
-## 文档
+## 环境要求
 
-[完全开发手册](https://doc.thinkphp.cn)
-
-
-## 赞助
-
-全新的[赞助计划](https://www.thinkphp.cn/sponsor)可以让你通过我们的网站、手册、欢迎页及GIT仓库获得巨大曝光，同时提升企业的品牌声誉，也更好保障ThinkPHP的可持续发展。
-
-[![](https://www.thinkphp.cn/sponsor/special.svg)](https://www.thinkphp.cn/sponsor/special)
-
-[![](https://www.thinkphp.cn/sponsor.svg)](https://www.thinkphp.cn/sponsor)
+- PHP 8.0+
+- MySQL 5.7+
+- Composer
 
 ## 安装
 
-~~~
-composer create-project topthink/think tp
-~~~
+```bash
+composer install
+cp .example.env .env
+# 编辑 .env 填写数据库配置
+```
 
-启动服务
+## 启动
 
-~~~
-cd tp
+```bash
 php think run
-~~~
+```
 
-然后就可以在浏览器中访问
-
-~~~
-http://localhost:8000
-~~~
-
-如果需要更新框架使用
-~~~
-composer update topthink/framework
-~~~
-
-## 命名规范
-
-`ThinkPHP`遵循PSR-2命名规范和PSR-4自动加载规范。
-
-## 参与开发
-
-直接提交PR或者Issue即可
-
-## 版权信息
-
-ThinkPHP遵循Apache2开源协议发布，并提供免费使用。
-
-本项目包含的第三方源码和二进制文件之版权信息另行标注。
-
-版权所有Copyright © 2006-2024 by ThinkPHP (http://thinkphp.cn) All rights reserved。
-
-ThinkPHP® 商标和著作权所有者为上海顶想信息科技有限公司。
-
-更多细节参阅 [LICENSE.txt](LICENSE.txt)
+访问 `http://localhost:8000`
