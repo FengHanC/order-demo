@@ -1,0 +1,51 @@
+{extend name="admin/layout" /}
+
+{block name="title"}商品管理 | 库存管理系统{/block}
+
+{block name="content"}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4 class="mb-1"><i class="bi bi-box-seam me-2"></i>商品管理</h4>
+        <p class="text-muted mb-0">共 {$count} 款手机</p>
+    </div>
+</div>
+
+<div class="card card-dashboard">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>商品名称</th>
+                    <th>单价</th>
+                    <th>库存</th>
+                    <th>状态</th>
+                    <th>创建时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {foreach $products as $p}
+                <tr>
+                    <td>{$p.id}</td>
+                    <td><span class="fw-medium">{$p.name}</span></td>
+                    <td>¥{$p.price|number_format=2}</td>
+                    <td><span class="fw-medium">{$p.stock}</span></td>
+                    <td>
+                    {if $p.stock == 0}
+                        <span class="badge badge-stock-low">缺货</span>
+                    {elseif $p.stock < 20}
+                        <span class="badge badge-stock-low">库存不足</span>
+                    {elseif $p.stock < 50}
+                        <span class="badge badge-stock-ok">正常</span>
+                    {else/}
+                        <span class="badge badge-stock-high">充足</span>
+                    {/if}
+                    </td>
+                    <td class="text-muted">{$p.created_at|date='Y-m-d'}</td>
+                </tr>
+                {/foreach}
+            </tbody>
+        </table>
+    </div>
+</div>
+{/block}
