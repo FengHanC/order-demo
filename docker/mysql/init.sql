@@ -26,6 +26,18 @@ CREATE TABLE IF NOT EXISTS `product` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品表';
 
 -- 初始化测试商品
+-- 出入库记录表
+CREATE TABLE IF NOT EXISTS `warehouse_record` (
+    `id`         INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+    `product_id` INT UNSIGNED    NOT NULL DEFAULT 0  COMMENT '商品 ID',
+    `type`       TINYINT         NOT NULL DEFAULT 0  COMMENT '类型：1-入库 2-出库',
+    `quantity`   INT UNSIGNED    NOT NULL DEFAULT 0  COMMENT '数量',
+    `remark`     VARCHAR(255)    NOT NULL DEFAULT '' COMMENT '备注',
+    `created_at` INT UNSIGNED    NOT NULL DEFAULT 0  COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_product_id` (`product_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='出入库记录表';
+
 INSERT INTO `product` (`id`, `name`, `price`, `stock`, `created_at`) VALUES
     (1, '测试商品A', 99.90, 100, UNIX_TIMESTAMP()),
     (2, '测试商品B', 199.00, 50, UNIX_TIMESTAMP());

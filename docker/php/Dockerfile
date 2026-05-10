@@ -11,8 +11,8 @@ RUN apk add --no-cache \
     && docker-php-ext-enable redis \
     && rm -rf /tmp/* /var/cache/apk/*
 
-# 安装 Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# 安装 Composer（用 curl 方式，避免拉 composer 镜像）
+RUN curl -fsSL https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 WORKDIR /var/www/html
 
