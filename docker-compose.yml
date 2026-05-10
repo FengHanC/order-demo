@@ -1,0 +1,52 @@
+services:
+  # ─── PHP（内建服务器，含项目代码） ─────────────────
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    ports:
+      - "8088:80"
+    command: >
+      sh -c "php -S 0.0.0.0:80 -t /var/www/html/public"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - order-net
+
+  # ─── MySQL ───────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: order_demo
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - order-net
+
+  # ─── Redis ───────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - order-net
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  order-net:
