@@ -3,6 +3,7 @@ namespace app\controller;
 
 use app\BaseController;
 use think\facade\Db;
+use think\Request;
 
 class Admin extends BaseController
 {
@@ -18,21 +19,16 @@ class Admin extends BaseController
 
     public function dashboard()
     {
-        // 总商品数
         $count = Db::name('product')->count();
-        // 总库存
         $stock = Db::name('product')->sum('stock');
-        // 总货值（用原生 SQL 计算 price * stock）
         $result = Db::query('SELECT SUM(price * stock) AS total_value FROM product');
         $value  = $result[0]['total_value'] ?? 0;
 
-        // 低库存预警（库存 < 20）
         $lowStock = Db::name('product')
             ->where('stock', '<', 20)
             ->order('stock', 'asc')
             ->select();
 
-        // 最近销售订单
         $recentOrders = Db::name('order')
             ->order('id', 'desc')
             ->limit(5)
@@ -46,5 +42,46 @@ class Admin extends BaseController
             'lowStock'      => $lowStock,
             'recentOrders'  => $recentOrders,
         ]);
+    }
+
+    // 编辑表单
+    public function edit()
+    {
+        $id = (int) $this->request->param('id');
+        $product = Db::name('product')->find($id);
+        if (!$product) {
+            return redirect('/admin/product');
+        }
+        // 获取上一条/下一条 ID 用于导航
+        $prev = Db::name('product')->where('id', '<', $id)->order('id', 'desc')->find();
+        $next = Db::name('product')->where('id', '>', $id)->order('id', 'asc')->find();
+
+        return view('admin/edit', [
+            'menu'    => 'product',
+            'p'       => $product,
+            'prev'    => $prev,
+            'next'    => $next,
+        ]);
+    }
+
+    // 保存更新
+    public function save(Request $request)
+    {
+        $id    = (int) $request->param('id');
+        $name  = trim($request->param('name', ''));
+        $price = (float) $request->param('price', 0);
+        $stock = (int) $request->param('stock', 0);
+
+        if (empty($name)) {
+            return redirect('/admin/edit?id=' . $id);
+        }
+
+        Db::name('product')->where('id', $id)->update([
+            'name'  => $name,
+            'price' => $price,
+            'stock' => max(0, $stock),
+        ]);
+
+        return redirect('/admin/product');
     }
 }

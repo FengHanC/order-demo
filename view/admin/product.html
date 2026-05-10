@@ -21,13 +21,14 @@
                     <th>库存</th>
                     <th>状态</th>
                     <th>创建时间</th>
+                    <th>操作</th>
                 </tr>
             </thead>
             <tbody>
                 {foreach $products as $p}
                 <tr>
                     <td>{$p.id}</td>
-                    <td><span class="fw-medium">{$p.name}</span></td>
+                    <td><span class="fw-medium">{$p.name|raw}</span></td>
                     <td>¥{$p.price|number_format=2}</td>
                     <td><span class="fw-medium">{$p.stock}</span></td>
                     <td>
@@ -42,6 +43,11 @@
                     {/if}
                     </td>
                     <td class="text-muted">{$p.created_at|date='Y-m-d'}</td>
+                    <td>
+                        <a href="/admin/edit?id={$p.id}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i> 编辑
+                        </a>
+                    </td>
                 </tr>
                 {/foreach}
             </tbody>
