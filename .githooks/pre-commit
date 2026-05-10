@@ -1,0 +1,58 @@
+#!/bin/sh
+# ─────────────────────────────────────────────────────────
+# pre-commit hook: 拦截加密/混淆的 PHP 文件
+# 检测规则：被 stage 的 .php 文件必须从 <?php 或 <?= 开头
+# ─────────────────────────────────────────────────────────
+
+set -e
+
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+echo "🔍 检查 PHP 文件加密状态..."
+
+violations=0
+
+# 只检查被 stage 的 .php 文件
+for file in $(git diff --cached --name-only --diff-filter=ACM | grep -E '\.php$'); do
+    # 只检查存在且非空的文件
+    [ -f "$file" ] || continue
+    [ -s "$file" ] || continue
+
+    # 读前 4 个字节
+    first4=$(od -A n -t x1 -N 4 "$file" 2>/dev/null | tr -d ' \n')
+
+    # 合法的 PHP 起始标记:
+    #   3c3f7068  -> <?ph (<?php 的前4字节)
+    #   3c3f3d    -> <?=  (短标签)
+    #   3c3f0a    -> <?\n (短标签)
+    #   3c3f72    -> <?r  (<?return ... 某些模板)
+    #   3c3f20    -> <?   (<? 空格)
+    case "$first4" in
+        3c3f7068|3c3f3d*|3c3f0a*|3c3f72*|3c3f20*)
+            # 合法 PHP 文件
+            ;;
+        3c3f)
+            # 刚好 <? 打头，允许
+            ;;
+        efbbbf3c)
+            # UTF-8 BOM + <，可能是带 BOM 的 PHP 文件
+            ;;
+        *)
+            violations=$((violations + 1))
+            printf "${RED}❌ 检测到加密/异常文件:${NC} %s\n" "$file"
+            printf "   (前 4 字节: 0x%s)\n" "$first4"
+            ;;
+    esac
+done
+
+if [ "$violations" -gt 0 ]; then
+    echo ""
+    printf "${RED}✋ 提交已阻止: %d 个文件疑似加密/不正常${NC}\n" "$violations"
+    echo "   请确认这些文件是否应该提交，或者改用明文 PHP。"
+    echo "   强制提交请使用: git commit --no-verify"
+    exit 1
+fi
+
+echo "✅ 所有 PHP 文件正常，提交继续"
+exit 0
