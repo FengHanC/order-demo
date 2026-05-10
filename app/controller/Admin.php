@@ -64,6 +64,23 @@ class Admin extends BaseController
         ]);
     }
 
+    // 订单列表
+    public function order()
+    {
+        $orders = Db::query('
+            SELECT o.*, p.name AS product_name
+            FROM `order` o
+            LEFT JOIN product p ON o.product_id = p.id
+            ORDER BY o.id DESC
+        ');
+
+        return view('admin/order', [
+            'menu'   => 'order',
+            'orders' => $orders,
+            'count'  => count($orders),
+        ]);
+    }
+
     // 保存更新
     public function save(Request $request)
     {
