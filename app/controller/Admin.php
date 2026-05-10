@@ -44,7 +44,6 @@ class Admin extends BaseController
         ]);
     }
 
-    // 编辑表单
     public function edit()
     {
         $id = (int) $this->request->param('id');
@@ -52,7 +51,6 @@ class Admin extends BaseController
         if (!$product) {
             return redirect('/admin/product');
         }
-        // 获取上一条/下一条 ID 用于导航
         $prev = Db::name('product')->where('id', '<', $id)->order('id', 'desc')->find();
         $next = Db::name('product')->where('id', '>', $id)->order('id', 'asc')->find();
 
@@ -64,7 +62,6 @@ class Admin extends BaseController
         ]);
     }
 
-    // 订单列表
     public function order()
     {
         $orders = Db::query('
@@ -81,7 +78,6 @@ class Admin extends BaseController
         ]);
     }
 
-    // 保存更新
     public function save(Request $request)
     {
         $id    = (int) $request->param('id');
@@ -100,5 +96,122 @@ class Admin extends BaseController
         ]);
 
         return redirect('/admin/product');
+    }
+
+    // ---- 出入库 ----
+
+    public function warehouse()
+    {
+        $records = Db::query('
+            SELECT w.*, p.name AS product_name
+            FROM warehouse_record w
+            LEFT JOIN product p ON w.product_id = p.id
+            ORDER BY w.id DESC
+        ');
+
+        $stats = Db::query('
+            SELECT
+                SUM(CASE WHEN type=1 THEN quantity ELSE 0 END) AS total_in,
+                SUM(CASE WHEN type=2 THEN quantity ELSE 0 END) AS total_out
+            FROM warehouse_record
+        ');
+
+        return view('admin/warehouse', [
+            'menu'     => 'warehouse',
+            'records'  => $records,
+            'count'    => count($records),
+            'totalIn'  => $stats[0]['total_in'] ?? 0,
+            'totalOut' => $stats[0]['total_out'] ?? 0,
+        ]);
+    }
+
+    public function stockIn(Request $request)
+    {
+        if ($request->isPost()) {
+            $productId = (int) $request->param('product_id');
+            $quantity  = (int) $request->param('quantity', 0);
+            $remark    = trim($request->param('remark', ''));
+
+            if ($productId <= 0 || $quantity <= 0) {
+                return redirect('/admin/stockIn');
+            }
+
+            $product = Db::name('product')->find($productId);
+            if (!$product) {
+                return redirect('/admin/stockIn');
+            }
+
+            Db::startTrans();
+            try {
+                Db::name('warehouse_record')->insert([
+                    'product_id' => $productId,
+                    'type'       => 1,
+                    'quantity'   => $quantity,
+                    'remark'     => $remark,
+                    'created_at' => time(),
+                ]);
+                Db::name('product')->where('id', $productId)->inc('stock', $quantity)->update();
+                Db::commit();
+            } catch (\Exception $e) {
+                Db::rollback();
+            }
+
+            return redirect('/admin/warehouse');
+        }
+
+        $products = Db::name('product')->order('id', 'asc')->select();
+        return view('admin/stock_in', [
+            'menu'     => 'warehouse',
+            'products' => $products,
+        ]);
+    }
+
+    public function stockOut(Request $request)
+    {
+        $error = $request->param('error') == 1;
+        if ($request->isPost()) {
+            $productId = (int) $request->param('product_id');
+            $quantity  = (int) $request->param('quantity', 0);
+            $remark    = trim($request->param('remark', ''));
+
+            if ($productId <= 0 || $quantity <= 0) {
+                return redirect('/admin/stockOut');
+            }
+
+            $product = Db::name('product')->find($productId);
+            if (!$product || $product['stock'] < $quantity) {
+                $error = true;
+                $products = Db::name('product')->order('id', 'asc')->select();
+                return view('admin/stock_out', [
+                    'menu'     => 'warehouse',
+                    'products' => $products,
+                    'error'    => true,
+                ]);
+            }
+
+            Db::startTrans();
+            try {
+                Db::name('warehouse_record')->insert([
+                    'product_id' => $productId,
+                    'type'       => 2,
+                    'quantity'   => $quantity,
+                    'remark'     => $remark,
+                    'created_at' => time(),
+                ]);
+                Db::name('product')->where('id', $productId)->dec('stock', $quantity)->update();
+                Db::commit();
+            } catch (\Exception $e) {
+                Db::rollback();
+            }
+
+            return redirect('/admin/warehouse');
+        }
+
+        $products = Db::name('product')->order('id', 'asc')->select();
+        return view('admin/stock_out', [
+            'menu'     => 'warehouse',
+            'products' => $products,
+            'error'    => $error,
+        ]);
     }
 }

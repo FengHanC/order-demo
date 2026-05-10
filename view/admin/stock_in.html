@@ -1,0 +1,43 @@
+{extend name="admin/layout" /}
+
+{block name="title"}入库 | 库存管理系统{/block}
+
+{block name="content"}
+<div class="page-header">
+    <h4 class="mb-1"><i class="bi bi-box-arrow-in-right text-success me-2"></i>商品入库</h4>
+    <p class="text-muted mb-0">增加商品库存</p>
+</div>
+
+<div class="card card-dashboard">
+    <div class="card-body">
+        <form method="post" action="/admin/stockIn">
+            <div class="mb-3">
+                <label class="form-label">商品</label>
+                <select class="form-select" name="product_id" required>
+                    <option value="">-- 请选择 --</option>
+                    {foreach $products as $p}
+                    <option value="{$p.id}">{$p.name|raw}（库存: {$p.stock}）</option>
+                    {/foreach}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">入库数量</label>
+                <input type="number" class="form-control" name="quantity"
+                       value="1" step="1" min="1" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">备注（可选）</label>
+                <input type="text" class="form-control" name="remark"
+                       placeholder="如：补货到仓、退货入库等">
+            </div>
+
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-lg"></i> 确认入库
+            </button>
+            <a href="/admin/warehouse" class="btn btn-outline-secondary ms-2">取消</a>
+        </form>
+    </div>
+</div>
+{/block}

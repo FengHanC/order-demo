@@ -1,0 +1,80 @@
+{extend name="admin/layout" /}
+
+{block name="title"}出入库管理 | 库存管理系统{/block}
+
+{block name="content"}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4 class="mb-1"><i class="bi bi-arrow-left-right me-2"></i>出入库管理</h4>
+        <p class="text-muted mb-0">共 {$count} 条记录</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/admin/stockIn" class="btn btn-success btn-sm">
+            <i class="bi bi-box-arrow-in-right"></i> 入库
+        </a>
+        <a href="/admin/stockOut" class="btn btn-danger btn-sm">
+            <i class="bi bi-box-arrow-right"></i> 出库
+        </a>
+    </div>
+</div>
+
+<!-- 汇总 -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="stat-card">
+            <div class="label">总入库</div>
+            <div class="num text-success">{$totalIn}</div>
+            <div class="label mt-1">件商品入库</div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="stat-card">
+            <div class="label">总出库</div>
+            <div class="num text-danger">{$totalOut}</div>
+            <div class="label mt-1">件商品出库</div>
+        </div>
+    </div>
+</div>
+
+<!-- 记录列表 -->
+<div class="card card-dashboard">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>商品</th>
+                    <th>类型</th>
+                    <th>数量</th>
+                    <th>备注</th>
+                    <th>时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {foreach $records as $r}
+                <tr>
+                    <td>{$r.id}</td>
+                    <td>{$r.product_name|raw}</td>
+                    <td>
+                        {if $r.type == 1}
+                            <span class="badge bg-success">入库</span>
+                        {else/}
+                            <span class="badge bg-danger">出库</span>
+                        {/if}
+                    </td>
+                    <td class="fw-medium">
+                        {if $r.type == 1}
+                            <span class="text-success">+{$r.quantity}</span>
+                        {else/}
+                            <span class="text-danger">-{$r.quantity}</span>
+                        {/if}
+                    </td>
+                    <td class="text-muted">{$r.remark}</td>
+                    <td class="text-muted small">{$r.created_at|date='Y-m-d H:i'}</td>
+                </tr>
+                {/foreach}
+            </tbody>
+        </table>
+    </div>
+</div>
+{/block}
